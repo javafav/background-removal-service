@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: background-removal-api
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11

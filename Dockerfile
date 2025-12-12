@@ -3,8 +3,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-# Note: libgl1-mesa-glx is obsolete in Debian Trixie, replaced by libgl1
+# Install system dependencies (optimized for smaller size)
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
@@ -22,5 +21,11 @@ COPY app.py .
 # Expose port
 EXPOSE 5000
 
-# Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "1", "app:app"]
+# Set environment variables for production
+ENV PYTHONUNBUFFERED=1
+
+# Run with gunicorn optimized for free tier
+# - 1 worker to reduce memory usage
+# - 120s timeout for background removal processing
+# - Lower worker connections
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "1", "--threads", "2", "--worker-class", "gthread", "app:app"]
