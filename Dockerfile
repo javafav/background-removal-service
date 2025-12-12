@@ -1,25 +1,26 @@
-# Use a small, recent python image
 FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-# avoid interactive prompts and reduce image size
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+# Install system dependencies
+# Note: libgl1-mesa-glx is obsolete in Debian Trixie, replaced by libgl1
+RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Install python deps
+# Copy requirements first for better caching
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
-COPY . .
+# Copy application code
+COPY app.py .
 
-# Run with gunicorn (change workers if you need more)
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app", "--workers", "1"]
+# Expose port
+EXPOSE 5000
+
+# Run with gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "1", "app:app"]
